@@ -27,6 +27,7 @@ class Paciente(Base):
     apellido = Column(String, index=True)
     fecha_nacimiento = Column(Date)
     numero_afiliado = Column(String, unique=True, index=True)
+    pertenece_mutua = Column(Boolean, default=True)  # Indica si el paciente pertenece a la mutua
 
     # Relaciones
     autorizaciones = relationship("Autorizacion", back_populates="paciente")
@@ -87,6 +88,18 @@ class DetalleFactura(Base):
     factura = relationship("Factura", back_populates="detalles")
 
 
+class ServicioClinica(Base):
+    __tablename__ = "servicios_clinica"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, index=True)
+    descripcion = Column(String)
+    tipo_servicio = Column(String)
+    precio = Column(Float)
+    incluido_mutua = Column(Boolean, default=False)
+    duracion_minutos = Column(Integer)
+
+
 class ServicioUtilizado(Base):
     __tablename__ = "servicios_utilizados"
 
@@ -132,6 +145,7 @@ class PacienteBase(BaseModel):
     apellido: str
     fecha_nacimiento: date
     numero_afiliado: str
+    pertenece_mutua: bool = True
 
 
 class PacienteCreate(PacienteBase):
@@ -220,6 +234,26 @@ class FacturaCreate(FacturaBase):
 class FacturaInDB(FacturaBase):
     id: int
     detalles: List[DetalleFacturaInDB] = []
+
+    class Config:
+        from_attributes = True
+
+
+class ServicioClinicaBase(BaseModel):
+    nombre: str
+    descripcion: str
+    tipo_servicio: str
+    precio: float
+    incluido_mutua: bool
+    duracion_minutos: int
+
+
+class ServicioClinicaCreate(ServicioClinicaBase):
+    pass
+
+
+class ServicioClinicaInDB(ServicioClinicaBase):
+    id: int
 
     class Config:
         from_attributes = True

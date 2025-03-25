@@ -1,6 +1,7 @@
 import os
 import logging
 import hashlib
+import csv
 from datetime import datetime, timedelta, date
 from typing import Optional, List, Dict, Any
 from sqlalchemy import create_engine
@@ -8,7 +9,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from jose import JWTError, jwt
 
-from models import Base, User, Paciente, Tratamiento, Autorizacion, Factura, DetalleFactura, ServicioUtilizado
+from models import Base, User, Paciente, Tratamiento, Autorizacion, Factura, DetalleFactura, ServicioUtilizado, \
+    ServicioClinica
 
 # Configuración
 PG_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/mutua_db")
@@ -94,9 +96,13 @@ def init_db(db: Session):
     # Inicializar pacientes de prueba
     if db.query(Paciente).count() == 0:
         pacientes = [
-            Paciente(nombre="Juan", apellido="Pérez", fecha_nacimiento=date(1980, 5, 15), numero_afiliado="A12345"),
-            Paciente(nombre="María", apellido="González", fecha_nacimiento=date(1975, 10, 22),
-                numero_afiliado="A67890")]
+            Paciente(nombre="Juan", apellido="Pérez", fecha_nacimiento=date(1980, 5, 15), numero_afiliado="A12345",
+                pertenece_mutua=True),
+            Paciente(nombre="María", apellido="González", fecha_nacimiento=date(1975, 10, 22), numero_afiliado="A67890",
+                pertenece_mutua=True),
+            Paciente(nombre="Pedro", apellido="Martínez", fecha_nacimiento=date(1990, 3, 8), numero_afiliado="B12345",
+                pertenece_mutua=False  # Este paciente no pertenece a la mutua
+            )]
         db.add_all(pacientes)
         db.commit()
 
@@ -106,6 +112,62 @@ def init_db(db: Session):
             Tratamiento(descripcion="Resonancia magnética", costo=500.0, requiere_autorizacion=True),
             Tratamiento(descripcion="Cirugía ambulatoria", costo=1200.0, requiere_autorizacion=True)]
         db.add_all(tratamientos)
+        db.commit()
+
+    # Inicializar catálogo de servicios de la clínica
+    if db.query(ServicioClinica).count() == 0:
+        # Cargar datos del CSV de servicios
+        servicios_data = [
+            {"nombre": "Consulta médica general", "descripcion": "Evaluación general de la salud del paciente.",
+             "tipo_servicio": "Consulta General", "precio": 50.0, "incluido_mutua": True, "duracion_minutos": 30},
+            {"nombre": "Consulta de especialidad (Cardiología)",
+             "descripcion": "Valoración especializada del sistema cardiovascular.",
+             "tipo_servicio": "Consulta Especializada", "precio": 80.0, "incluido_mutua": True, "duracion_minutos": 40},
+            {"nombre": "Consulta de especialidad (Dermatología)",
+             "descripcion": "Diagnóstico y tratamiento de enfermedades de la piel.",
+             "tipo_servicio": "Consulta Especializada", "precio": 75.0, "incluido_mutua": True, "duracion_minutos": 30},
+            {"nombre": "Consulta de especialidad (Neurología)",
+             "descripcion": "Evaluación y diagnóstico de trastornos neurológicos.",
+             "tipo_servicio": "Consulta Especializada", "precio": 90.0, "incluido_mutua": False,
+             "duracion_minutos": 45},
+            {"nombre": "Análisis de sangre completo", "descripcion": "Examen general de componentes sanguíneos.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 40.0, "incluido_mutua": True, "duracion_minutos": 15},
+            {"nombre": "Electrocardiograma (ECG)", "descripcion": "Registro de la actividad eléctrica del corazón.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 35.0, "incluido_mutua": True, "duracion_minutos": 20},
+            {"nombre": "Ecografía abdominal", "descripcion": "Exploración por ultrasonido de órganos abdominales.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 90.0, "incluido_mutua": False, "duracion_minutos": 30},
+            {"nombre": "Resonancia Magnética (RMN)",
+             "descripcion": "Exploración por imágenes de alta resolución del cuerpo.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 250.0, "incluido_mutua": False, "duracion_minutos": 60},
+            {"nombre": "Radiografía de tórax", "descripcion": "Imagen del tórax para evaluar pulmones y corazón.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 50.0, "incluido_mutua": True, "duracion_minutos": 20},
+            {"nombre": "Colonoscopia", "descripcion": "Exploración del colon mediante endoscopio.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 300.0, "incluido_mutua": False, "duracion_minutos": 45},
+            {"nombre": "Fisioterapia rehabilitadora", "descripcion": "Terapia física para recuperación de lesiones.",
+             "tipo_servicio": "Terapia", "precio": 60.0, "incluido_mutua": True, "duracion_minutos": 45},
+            {"nombre": "Sesión de psicología clínica", "descripcion": "Evaluación y tratamiento psicológico.",
+             "tipo_servicio": "Terapia", "precio": 70.0, "incluido_mutua": False, "duracion_minutos": 50},
+            {"nombre": "Consulta de ginecología", "descripcion": "Revisión ginecológica y prevención de enfermedades.",
+             "tipo_servicio": "Consulta Especializada", "precio": 80.0, "incluido_mutua": True, "duracion_minutos": 40},
+            {"nombre": "Consulta de pediatría", "descripcion": "Valoración de la salud infantil.",
+             "tipo_servicio": "Consulta Especializada", "precio": 60.0, "incluido_mutua": True, "duracion_minutos": 30},
+            {"nombre": "Extracción de lunar", "descripcion": "Procedimiento quirúrgico menor para eliminar lunares.",
+             "tipo_servicio": "Cirugía Menor", "precio": 120.0, "incluido_mutua": False, "duracion_minutos": 30},
+            {"nombre": "Vacunación antigripal", "descripcion": "Administración de vacuna contra la gripe.",
+             "tipo_servicio": "Prevención", "precio": 25.0, "incluido_mutua": True, "duracion_minutos": 15},
+            {"nombre": "Ergometría (Prueba de esfuerzo)",
+             "descripcion": "Evaluación del rendimiento cardíaco bajo esfuerzo.", "tipo_servicio": "Prueba Diagnóstica",
+             "precio": 110.0, "incluido_mutua": False, "duracion_minutos": 45},
+            {"nombre": "Holter de presión arterial", "descripcion": "Monitoreo continuo de la presión arterial.",
+             "tipo_servicio": "Prueba Diagnóstica", "precio": 90.0, "incluido_mutua": True, "duracion_minutos": 30}]
+
+        servicios = []
+        for servicio_data in servicios_data:
+            servicios.append(ServicioClinica(nombre=servicio_data["nombre"], descripcion=servicio_data["descripcion"],
+                tipo_servicio=servicio_data["tipo_servicio"], precio=servicio_data["precio"],
+                incluido_mutua=servicio_data["incluido_mutua"], duracion_minutos=servicio_data["duracion_minutos"]))
+
+        db.add_all(servicios)
         db.commit()
 
     # Obtener pacientes y tratamientos para crear registros relacionados

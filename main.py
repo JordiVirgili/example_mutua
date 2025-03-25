@@ -7,9 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from models import (User, Paciente, Tratamiento, Autorizacion, Factura, DetalleFactura, ServicioUtilizado, TokenBase,
-                    TokenData, UserInDB, PacienteInDB, TratamientoInDB, AutorizacionInDB, AutorizacionWithDetails,
-                    FacturaInDB, DetalleFacturaInDB, ServicioUtilizadoInDB, InformeServicios)
+from models import (User, Paciente, Tratamiento, Autorizacion, Factura, DetalleFactura, ServicioUtilizado,
+                    ServicioClinica, TokenBase, TokenData, UserInDB, PacienteInDB, TratamientoInDB, AutorizacionInDB,
+                    AutorizacionWithDetails, FacturaInDB, DetalleFacturaInDB, ServicioUtilizadoInDB,
+                    ServicioClinicaInDB, InformeServicios)
 from database import (get_db, verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES,
                       SECRET_KEY, ALGORITHM, init_db)
 
@@ -189,6 +190,40 @@ async def listar_tratamientos(current_user: User = Depends(get_current_active_us
     Listar todos los tratamientos disponibles (para referencia).
     """
     return db.query(Tratamiento).all()
+
+
+# Rutas para el catálogo de servicios de la clínica
+@app.get("/servicios-clinica/", response_model=List[ServicioClinicaInDB], tags=["Servicios Clínica"])
+async def listar_servicios_clinica(current_user: User = Depends(get_current_active_user),
+        db: Session = Depends(get_db)):
+    """
+    Listar todos los servicios del catálogo de la clínica.
+    """
+    return db.query(ServicioClinica).all()
+
+
+@app.get("/servicios-clinica/mutua", response_model=List[ServicioClinicaInDB], tags=["Servicios Clínica"])
+async def listar_servicios_incluidos_mutua(current_user: User = Depends(get_current_active_user),
+        db: Session = Depends(get_db)):
+    """
+    Listar los servicios del catálogo incluidos en la mutua.
+    """
+    return db.query(ServicioClinica).filter(ServicioClinica.incluido_mutua == True).all()
+
+
+# Ruta para verificar si un paciente pertenece a la mutua
+@app.get("/pacientes/verificar/{afiliado}", tags=["Pacientes"])
+async def verificar_pertenencia_mutua(afiliado: str, current_user: User = Depends(get_current_active_user),
+        db: Session = Depends(get_db)):
+    """
+    Verificar si un paciente pertenece a la mutua.
+    """
+    paciente = db.query(Paciente).filter(Paciente.numero_afiliado == afiliado).first()
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+    return {"id": paciente.id, "nombre": paciente.nombre, "apellido": paciente.apellido,
+        "numero_afiliado": paciente.numero_afiliado, "pertenece_mutua": paciente.pertenece_mutua}
 
 
 if __name__ == "__main__":
