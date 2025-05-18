@@ -39,8 +39,12 @@ class Tratamiento(Base):
     __tablename__ = "tratamientos"
 
     id = Column(Integer, primary_key=True, index=True)
-    descripcion = Column(String, index=True)
-    costo = Column(Float)
+    servicio = Column(String, index=True)
+    descripcion = Column(String)
+    tipo_servicio = Column(String, index=True)
+    precio = Column(Float)
+    incluido_mutua = Column(Boolean, default=False)
+    duracion_minutos = Column(Integer)
     requiere_autorizacion = Column(Boolean, default=False)
 
     # Relaciones
@@ -160,9 +164,13 @@ class PacienteInDB(PacienteBase):
 
 
 class TratamientoBase(BaseModel):
+    servicio: str
     descripcion: str
-    costo: float
-    requiere_autorizacion: bool = False
+    tipo_servicio: str
+    precio: float
+    incluido_mutua: bool
+    duracion_minutos: int
+    requiere_autorizacion: bool
 
 
 class TratamientoCreate(TratamientoBase):

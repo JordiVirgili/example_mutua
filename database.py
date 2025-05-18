@@ -13,8 +13,8 @@ from models import Base, User, Paciente, Tratamiento, Autorizacion, Factura, Det
     ServicioClinica
 
 # Configuración
-PG_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/mutua_db")
-SQLITE_DATABASE_URL = "sqlite:///./mutua.db"
+PG_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres_mutua_user:9PlSRIclL5LoGFg1O6CqfVCBppGsPpy5@dpg-d051kr6uk2gs73e5n9qg-a.frankfurt-postgres.render.com/postgres_mutua")
+#SQLITE_DATABASE_URL = "sqlite:///./mutua.db"
 SECRET_KEY = os.getenv("SECRET_KEY", "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -108,66 +108,66 @@ def init_db(db: Session):
 
     # Inicializar tratamientos de prueba
     if db.query(Tratamiento).count() == 0:
-        tratamientos = [Tratamiento(descripcion="Consulta médica general", costo=50.0, requiere_autorizacion=False),
-            Tratamiento(descripcion="Resonancia magnética", costo=500.0, requiere_autorizacion=True),
-            Tratamiento(descripcion="Cirugía ambulatoria", costo=1200.0, requiere_autorizacion=True)]
+        tratamientos = [
+            Tratamiento(servicio="Consulta médica general", descripcion="Evaluación general de la salud del paciente.",
+                tipo_servicio="Consulta General", precio=50, incluido_mutua=True, duracion_minutos=30,
+                requiere_autorizacion=False), Tratamiento(servicio="Consulta de especialidad (Cardiología)",
+                descripcion="Valoración especializada del sistema cardiovascular.",
+                tipo_servicio="Consulta Especializada", precio=80, incluido_mutua=True, duracion_minutos=40,
+                requiere_autorizacion=False), Tratamiento(servicio="Consulta de especialidad (Dermatología)",
+                descripcion="Diagnóstico y tratamiento de enfermedades de la piel.",
+                tipo_servicio="Consulta Especializada", precio=75, incluido_mutua=True, duracion_minutos=30,
+                requiere_autorizacion=False), Tratamiento(servicio="Consulta de especialidad (Neurología)",
+                descripcion="Evaluación y diagnóstico de trastornos neurológicos.",
+                tipo_servicio="Consulta Especializada", precio=90, incluido_mutua=False, duracion_minutos=45,
+                requiere_autorizacion=False),
+            Tratamiento(servicio="Análisis de sangre completo", descripcion="Examen general de componentes sanguíneos.",
+                tipo_servicio="Prueba Diagnóstica", precio=40, incluido_mutua=True, duracion_minutos=15,
+                requiere_autorizacion=False), Tratamiento(servicio="Electrocardiograma (ECG)",
+                descripcion="Registro de la actividad eléctrica del corazón.", tipo_servicio="Prueba Diagnóstica",
+                precio=35, incluido_mutua=True, duracion_minutos=20, requiere_autorizacion=False),
+            Tratamiento(servicio="Ecografía abdominal",
+                descripcion="Exploración por ultrasonido de órganos abdominales.", tipo_servicio="Prueba Diagnóstica",
+                precio=90, incluido_mutua=False, duracion_minutos=30, requiere_autorizacion=False),
+            Tratamiento(servicio="Resonancia Magnética (RMN)",
+                descripcion="Exploración por imágenes de alta resolución del cuerpo.",
+                tipo_servicio="Prueba Diagnóstica", precio=250, incluido_mutua=False, duracion_minutos=60,
+                requiere_autorizacion=False), Tratamiento(servicio="Radiografía de tórax",
+                descripcion="Imagen del tórax para evaluar pulmones y corazón.", tipo_servicio="Prueba Diagnóstica",
+                precio=50, incluido_mutua=True, duracion_minutos=20, requiere_autorizacion=False),
+            Tratamiento(servicio="Colonoscopia", descripcion="Exploración del colon mediante endoscopio.",
+                tipo_servicio="Prueba Diagnóstica", precio=300, incluido_mutua=False, duracion_minutos=45,
+                requiere_autorizacion=False), Tratamiento(servicio="Fisioterapia rehabilitadora",
+                descripcion="Terapia física para recuperación de lesiones.", tipo_servicio="Terapia", precio=60,
+                incluido_mutua=True, duracion_minutos=45, requiere_autorizacion=False),
+            Tratamiento(servicio="Sesión de psicología clínica", descripcion="Evaluación y tratamiento psicológico.",
+                tipo_servicio="Terapia", precio=70, incluido_mutua=False, duracion_minutos=50,
+                requiere_autorizacion=False), Tratamiento(servicio="Consulta de ginecología",
+                descripcion="Revisión ginecológica y prevención de enfermedades.",
+                tipo_servicio="Consulta Especializada", precio=80, incluido_mutua=True, duracion_minutos=40,
+                requiere_autorizacion=False),
+            Tratamiento(servicio="Consulta de pediatría", descripcion="Valoración de la salud infantil.",
+                tipo_servicio="Consulta Especializada", precio=60, incluido_mutua=True, duracion_minutos=30,
+                requiere_autorizacion=False), Tratamiento(servicio="Extracción de lunar",
+                descripcion="Procedimiento quirúrgico menor para eliminar lunares.", tipo_servicio="Cirugía Menor",
+                precio=120, incluido_mutua=False, duracion_minutos=30, requiere_autorizacion=False),
+            Tratamiento(servicio="Vacunación antigripal", descripcion="Administración de vacuna contra la gripe.",
+                tipo_servicio="Prevención", precio=25, incluido_mutua=True, duracion_minutos=15,
+                requiere_autorizacion=False), Tratamiento(servicio="Ergometría (Prueba de esfuerzo)",
+                descripcion="Evaluación del rendimiento cardíaco bajo esfuerzo.", tipo_servicio="Prueba Diagnóstica",
+                precio=110, incluido_mutua=False, duracion_minutos=45, requiere_autorizacion=False),
+            Tratamiento(servicio="Holter de presión arterial", descripcion="Monitoreo continuo de la presión arterial.",
+                tipo_servicio="Prueba Diagnóstica", precio=90, incluido_mutua=True, duracion_minutos=30,
+                requiere_autorizacion=True), Tratamiento(servicio="Consulta de otorrinolaringología",
+                descripcion="Diagnóstico y tratamiento de problemas de oído, nariz y garganta.",
+                tipo_servicio="Consulta Especializada", precio=85, incluido_mutua=False, duracion_minutos=40,
+                requiere_autorizacion=False),
+            Tratamiento(servicio="Análisis de sangre completo", descripcion="Examen general de componentes sanguíneos.",
+                tipo_servicio="Prueba Diagnóstica", precio=45, incluido_mutua=True, duracion_minutos=15,
+                requiere_autorizacion=False), Tratamiento(servicio="Fisioterapia rehabilitadora",
+                descripcion="Terapia física para recuperación de lesiones.", tipo_servicio="Terapia", precio=65,
+                incluido_mutua=True, duracion_minutos=45, requiere_autorizacion=False)]
         db.add_all(tratamientos)
-        db.commit()
-
-    # Inicializar catálogo de servicios de la clínica
-    if db.query(ServicioClinica).count() == 0:
-        # Cargar datos del CSV de servicios
-        servicios_data = [
-            {"nombre": "Consulta médica general", "descripcion": "Evaluación general de la salud del paciente.",
-             "tipo_servicio": "Consulta General", "precio": 50.0, "incluido_mutua": True, "duracion_minutos": 30},
-            {"nombre": "Consulta de especialidad (Cardiología)",
-             "descripcion": "Valoración especializada del sistema cardiovascular.",
-             "tipo_servicio": "Consulta Especializada", "precio": 80.0, "incluido_mutua": True, "duracion_minutos": 40},
-            {"nombre": "Consulta de especialidad (Dermatología)",
-             "descripcion": "Diagnóstico y tratamiento de enfermedades de la piel.",
-             "tipo_servicio": "Consulta Especializada", "precio": 75.0, "incluido_mutua": True, "duracion_minutos": 30},
-            {"nombre": "Consulta de especialidad (Neurología)",
-             "descripcion": "Evaluación y diagnóstico de trastornos neurológicos.",
-             "tipo_servicio": "Consulta Especializada", "precio": 90.0, "incluido_mutua": False,
-             "duracion_minutos": 45},
-            {"nombre": "Análisis de sangre completo", "descripcion": "Examen general de componentes sanguíneos.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 40.0, "incluido_mutua": True, "duracion_minutos": 15},
-            {"nombre": "Electrocardiograma (ECG)", "descripcion": "Registro de la actividad eléctrica del corazón.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 35.0, "incluido_mutua": True, "duracion_minutos": 20},
-            {"nombre": "Ecografía abdominal", "descripcion": "Exploración por ultrasonido de órganos abdominales.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 90.0, "incluido_mutua": False, "duracion_minutos": 30},
-            {"nombre": "Resonancia Magnética (RMN)",
-             "descripcion": "Exploración por imágenes de alta resolución del cuerpo.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 250.0, "incluido_mutua": False, "duracion_minutos": 60},
-            {"nombre": "Radiografía de tórax", "descripcion": "Imagen del tórax para evaluar pulmones y corazón.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 50.0, "incluido_mutua": True, "duracion_minutos": 20},
-            {"nombre": "Colonoscopia", "descripcion": "Exploración del colon mediante endoscopio.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 300.0, "incluido_mutua": False, "duracion_minutos": 45},
-            {"nombre": "Fisioterapia rehabilitadora", "descripcion": "Terapia física para recuperación de lesiones.",
-             "tipo_servicio": "Terapia", "precio": 60.0, "incluido_mutua": True, "duracion_minutos": 45},
-            {"nombre": "Sesión de psicología clínica", "descripcion": "Evaluación y tratamiento psicológico.",
-             "tipo_servicio": "Terapia", "precio": 70.0, "incluido_mutua": False, "duracion_minutos": 50},
-            {"nombre": "Consulta de ginecología", "descripcion": "Revisión ginecológica y prevención de enfermedades.",
-             "tipo_servicio": "Consulta Especializada", "precio": 80.0, "incluido_mutua": True, "duracion_minutos": 40},
-            {"nombre": "Consulta de pediatría", "descripcion": "Valoración de la salud infantil.",
-             "tipo_servicio": "Consulta Especializada", "precio": 60.0, "incluido_mutua": True, "duracion_minutos": 30},
-            {"nombre": "Extracción de lunar", "descripcion": "Procedimiento quirúrgico menor para eliminar lunares.",
-             "tipo_servicio": "Cirugía Menor", "precio": 120.0, "incluido_mutua": False, "duracion_minutos": 30},
-            {"nombre": "Vacunación antigripal", "descripcion": "Administración de vacuna contra la gripe.",
-             "tipo_servicio": "Prevención", "precio": 25.0, "incluido_mutua": True, "duracion_minutos": 15},
-            {"nombre": "Ergometría (Prueba de esfuerzo)",
-             "descripcion": "Evaluación del rendimiento cardíaco bajo esfuerzo.", "tipo_servicio": "Prueba Diagnóstica",
-             "precio": 110.0, "incluido_mutua": False, "duracion_minutos": 45},
-            {"nombre": "Holter de presión arterial", "descripcion": "Monitoreo continuo de la presión arterial.",
-             "tipo_servicio": "Prueba Diagnóstica", "precio": 90.0, "incluido_mutua": True, "duracion_minutos": 30}]
-
-        servicios = []
-        for servicio_data in servicios_data:
-            servicios.append(ServicioClinica(nombre=servicio_data["nombre"], descripcion=servicio_data["descripcion"],
-                tipo_servicio=servicio_data["tipo_servicio"], precio=servicio_data["precio"],
-                incluido_mutua=servicio_data["incluido_mutua"], duracion_minutos=servicio_data["duracion_minutos"]))
-
-        db.add_all(servicios)
         db.commit()
 
     # Obtener pacientes y tratamientos para crear registros relacionados

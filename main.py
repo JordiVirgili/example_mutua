@@ -126,22 +126,6 @@ async def consultar_historial_autorizaciones(id_paciente: int, current_user: Use
     return autorizaciones
 
 
-@app.get("/facturas/paciente/{id_paciente}", response_model=List[FacturaInDB], tags=["Facturas"])
-async def consultar_estado_facturas(id_paciente: int, current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_db)):
-    """
-    Consultar el estado de las facturas asociadas a un paciente.
-    """
-    # Verificar si el paciente existe
-    paciente = db.query(Paciente).filter(Paciente.id == id_paciente).first()
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-
-    # Buscar facturas del paciente
-    facturas = db.query(Factura).filter(Factura.id_paciente == id_paciente).all()
-
-    return facturas
-
 
 @app.get("/servicios/informe/{id_paciente}", response_model=InformeServicios, tags=["Servicios"])
 async def solicitar_informe_servicios(id_paciente: int, fecha_inicio: Optional[date] = None,
@@ -184,10 +168,10 @@ async def listar_pacientes(current_user: User = Depends(get_current_active_user)
     return db.query(Paciente).all()
 
 
-@app.get("/tratamientos/", response_model=List[TratamientoInDB], tags=["Referencia"])
-async def listar_tratamientos(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+@app.get("/servicios/", response_model=List[TratamientoInDB], tags=["Referencia"])
+async def listar_servicios(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     """
-    Listar todos los tratamientos disponibles (para referencia).
+    Listar todos los servicios disponibles en la mutua (para referencia).
     """
     return db.query(Tratamiento).all()
 
